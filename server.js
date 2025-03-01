@@ -227,6 +227,19 @@ app.get('/orders/:orderId', async (req, res) => {
   res.json(order);
 });
 
+// API route to reset all data
+app.post('/reset', async (req, res) => {
+  await sequelize.sync({ force: true });
+
+  // Load default data
+  await Product.bulkCreate(defaultProducts);
+  await DeliveryOption.bulkCreate(defaultDeliveryOptions);
+  await CartItem.bulkCreate(defaultCart);
+  await Order.bulkCreate(defaultOrders);
+
+  res.status(204).send();
+});
+
 // Error handling middleware
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
@@ -237,22 +250,6 @@ app.use((err, req, res, next) => {
 
 // Sync database and load default products, delivery options, cart items, and orders if none exist
 await sequelize.sync();
-const productCount = await Product.count();
-if (productCount === 0) {
-  await Product.bulkCreate(defaultProducts);
-}
-const deliveryOptionCount = await DeliveryOption.count();
-if (deliveryOptionCount === 0) {
-  await DeliveryOption.bulkCreate(defaultDeliveryOptions);
-}
-const cartItemCount = await CartItem.count();
-if (cartItemCount === 0) {
-  await CartItem.bulkCreate(defaultCart);
-}
-const orderCount = await Order.count();
-if (orderCount === 0) {
-  await Order.bulkCreate(defaultOrders);
-}
 
 // Start server
 app.listen(PORT, () => {
