@@ -30,10 +30,12 @@ app.get('/products', async (req, res) => {
 });
 
 // Error handling middleware
+/* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
+/* eslint-enable no-unused-vars */
 
 // Sync database and load default products if none exist
 await sequelize.sync();

@@ -16,5 +16,8 @@
     "express": "^4.21.2",
     "sequelize": "^6.6.5",
     "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
   }
 }
