@@ -5,8 +5,10 @@ import { fileURLToPath } from 'url';
 import { sequelize } from './models/index.js';
 import { Product } from './models/Product.js';
 import { DeliveryOption } from './models/DeliveryOption.js';
+import { CartItem } from './models/CartItem.js';
 import { defaultProducts } from './defaultData/defaultProducts.js';
 import { defaultDeliveryOptions } from './defaultData/defaultDeliveryOptions.js';
+import { defaultCart } from './defaultData/defaultCart.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +34,24 @@ app.get('/delivery-options', async (req, res) => {
   res.json(deliveryOptions);
 });
 
+// API route for cart items
+app.get('/cart-items', async (req, res) => {
+  const expand = req.query.expand;
+  let cartItems = await CartItem.findAll();
+
+  if (expand === 'product') {
+    cartItems = await Promise.all(cartItems.map(async (item) => {
+      const product = await Product.findByPk(item.productId);
+      return {
+        ...item.toJSON(),
+        product
+      };
+    }));
+  }
+
+  res.json(cartItems);
+});
+
 // Error handling middleware
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
@@ -40,7 +60,7 @@ app.use((err, req, res, next) => {
 });
 /* eslint-enable no-unused-vars */
 
-// Sync database and load default products and delivery options if none exist
+// Sync database and load default products, delivery options, and cart items if none exist
 await sequelize.sync();
 const productCount = await Product.count();
 if (productCount === 0) {
@@ -49,6 +69,10 @@ if (productCount === 0) {
 const deliveryOptionCount = await DeliveryOption.count();
 if (deliveryOptionCount === 0) {
   await DeliveryOption.bulkCreate(defaultDeliveryOptions);
+}
+const cartItemCount = await CartItem.count();
+if (cartItemCount === 0) {
+  await CartItem.bulkCreate(defaultCart);
 }
 
 // Start server
