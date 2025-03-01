@@ -154,6 +154,52 @@ app.get('/orders', async (req, res) => {
   res.json(orders);
 });
 
+// API route to create an order
+app.post('/orders', async (req, res) => {
+  const { cart } = req.body;
+
+  // Validate the cart
+  if (!Array.isArray(cart) || cart.length === 0) {
+    return res.status(400).json({ error: 'Invalid cart' });
+  }
+
+  let totalCostCents = 0;
+  const products = await Promise.all(cart.map(async (item) => {
+    const product = await Product.findByPk(item.productId);
+    if (!product) {
+      throw new Error(`Product not found: ${item.productId}`);
+    }
+    const deliveryOption = await DeliveryOption.findByPk(item.deliveryOptionId);
+    if (!deliveryOption) {
+      throw new Error(`Invalid delivery option: ${item.deliveryOptionId}`);
+    }
+    const productCost = product.priceCents * item.quantity;
+    const shippingCost = deliveryOption.priceCents;
+    totalCostCents += productCost + shippingCost;
+    const estimatedDeliveryTimeMs = Date.now() + deliveryOption.deliveryDays * 24 * 60 * 60 * 1000;
+    return {
+      productId: item.productId,
+      quantity: item.quantity,
+      estimatedDeliveryTimeMs
+    };
+  }));
+
+  // Apply 10% tax
+  totalCostCents = Math.round(totalCostCents * 1.1);
+
+  // Create the order
+  const order = await Order.create({
+    orderTimeMs: Date.now(),
+    totalCostCents,
+    products
+  });
+
+  // Remove everything from the cart
+  await CartItem.destroy({ where: {} });
+
+  res.status(201).json(order);
+});
+
 // Error handling middleware
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
