@@ -6,9 +6,11 @@ import { sequelize } from './models/index.js';
 import { Product } from './models/Product.js';
 import { DeliveryOption } from './models/DeliveryOption.js';
 import { CartItem } from './models/CartItem.js';
+import { Order } from './models/Order.js';
 import { defaultProducts } from './defaultData/defaultProducts.js';
 import { defaultDeliveryOptions } from './defaultData/defaultDeliveryOptions.js';
 import { defaultCart } from './defaultData/defaultCart.js';
+import { defaultOrders } from './defaultData/defaultOrders.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -128,6 +130,30 @@ app.delete('/cart-items/:productId', async (req, res) => {
   res.status(204).send();
 });
 
+// API route to get all orders
+app.get('/orders', async (req, res) => {
+  const expand = req.query.expand;
+  let orders = await Order.findAll();
+
+  if (expand === 'products') {
+    orders = await Promise.all(orders.map(async (order) => {
+      const products = await Promise.all(order.products.map(async (product) => {
+        const productDetails = await Product.findByPk(product.productId);
+        return {
+          ...product,
+          product: productDetails
+        };
+      }));
+      return {
+        ...order.toJSON(),
+        products
+      };
+    }));
+  }
+
+  res.json(orders);
+});
+
 // Error handling middleware
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
@@ -136,7 +162,7 @@ app.use((err, req, res, next) => {
 });
 /* eslint-enable no-unused-vars */
 
-// Sync database and load default products, delivery options, and cart items if none exist
+// Sync database and load default products, delivery options, cart items, and orders if none exist
 await sequelize.sync();
 const productCount = await Product.count();
 if (productCount === 0) {
@@ -149,6 +175,10 @@ if (deliveryOptionCount === 0) {
 const cartItemCount = await CartItem.count();
 if (cartItemCount === 0) {
   await CartItem.bulkCreate(defaultCart);
+}
+const orderCount = await Order.count();
+if (orderCount === 0) {
+  await Order.bulkCreate(defaultOrders);
 }
 
 // Start server
