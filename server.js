@@ -3,14 +3,11 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sequelize } from './models/index.js';
-import { Product } from './models/Product.js';
-import { DeliveryOption } from './models/DeliveryOption.js';
-import { CartItem } from './models/CartItem.js';
-import { Order } from './models/Order.js';
-import { defaultProducts } from './defaultData/defaultProducts.js';
-import { defaultDeliveryOptions } from './defaultData/defaultDeliveryOptions.js';
-import { defaultCart } from './defaultData/defaultCart.js';
-import { defaultOrders } from './defaultData/defaultOrders.js';
+import productRoutes from './routes/products.js';
+import deliveryOptionRoutes from './routes/deliveryOptions.js';
+import cartItemRoutes from './routes/cartItems.js';
+import orderRoutes from './routes/orders.js';
+import resetRoutes from './routes/reset.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,221 +21,12 @@ app.use(express.json());
 // Serve images from the images folder
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// API route for products
-app.get('/products', async (req, res) => {
-  const products = await Product.findAll();
-  res.json(products);
-});
-
-// API route for delivery options
-app.get('/delivery-options', async (req, res) => {
-  const deliveryOptions = await DeliveryOption.findAll();
-  res.json(deliveryOptions);
-});
-
-// API route for cart items
-app.get('/cart-items', async (req, res) => {
-  const expand = req.query.expand;
-  let cartItems = await CartItem.findAll();
-
-  if (expand === 'product') {
-    cartItems = await Promise.all(cartItems.map(async (item) => {
-      const product = await Product.findByPk(item.productId);
-      return {
-        ...item.toJSON(),
-        product
-      };
-    }));
-  }
-
-  res.json(cartItems);
-});
-
-// API route to add a product to the cart
-app.post('/cart-items', async (req, res) => {
-  const { productId, quantity } = req.body;
-
-  // Check if productId exists in the database
-  const product = await Product.findByPk(productId);
-  if (!product) {
-    return res.status(400).json({ error: 'Product not found' });
-  }
-
-  // Check if quantity is a number between 1 and 10
-  if (typeof quantity !== 'number' || quantity < 1 || quantity > 10) {
-    return res.status(400).json({ error: 'Quantity must be a number between 1 and 10' });
-  }
-
-  // Check if the product already exists in the cart
-  let cartItem = await CartItem.findOne({ where: { productId } });
-  if (cartItem) {
-    // Increase the quantity
-    cartItem.quantity += quantity;
-    await cartItem.save();
-  } else {
-    // Add the product to the cart with default deliveryOptionId of "1"
-    cartItem = await CartItem.create({ productId, quantity, deliveryOptionId: "1" });
-  }
-
-  res.status(201).json(cartItem);
-});
-
-// API route to update a product in the cart
-app.put('/cart-items/:productId', async (req, res) => {
-  const { productId } = req.params;
-  const { quantity, deliveryOptionId } = req.body;
-
-  // Check if the cart item exists
-  const cartItem = await CartItem.findOne({ where: { productId } });
-  if (!cartItem) {
-    return res.status(404).json({ error: 'Cart item not found' });
-  }
-
-  // Validate quantity if provided
-  if (quantity !== undefined) {
-    if (typeof quantity !== 'number' || quantity < 1 || quantity > 10) {
-      return res.status(400).json({ error: 'Quantity must be a number between 1 and 10' });
-    }
-    cartItem.quantity = quantity;
-  }
-
-  // Validate deliveryOptionId if provided
-  if (deliveryOptionId !== undefined) {
-    const deliveryOption = await DeliveryOption.findByPk(deliveryOptionId);
-    if (!deliveryOption) {
-      return res.status(400).json({ error: 'Invalid delivery option' });
-    }
-    cartItem.deliveryOptionId = deliveryOptionId;
-  }
-
-  await cartItem.save();
-  res.json(cartItem);
-});
-
-// API route to delete a product from the cart
-app.delete('/cart-items/:productId', async (req, res) => {
-  const { productId } = req.params;
-
-  // Check if the cart item exists
-  const cartItem = await CartItem.findOne({ where: { productId } });
-  if (!cartItem) {
-    return res.status(404).json({ error: 'Cart item not found' });
-  }
-
-  // Delete the cart item
-  await cartItem.destroy();
-  res.status(204).send();
-});
-
-// API route to get all orders
-app.get('/orders', async (req, res) => {
-  const expand = req.query.expand;
-  let orders = await Order.findAll();
-
-  if (expand === 'products') {
-    orders = await Promise.all(orders.map(async (order) => {
-      const products = await Promise.all(order.products.map(async (product) => {
-        const productDetails = await Product.findByPk(product.productId);
-        return {
-          ...product,
-          product: productDetails
-        };
-      }));
-      return {
-        ...order.toJSON(),
-        products
-      };
-    }));
-  }
-
-  res.json(orders);
-});
-
-// API route to create an order
-app.post('/orders', async (req, res) => {
-  const { cart } = req.body;
-
-  // Validate the cart
-  if (!Array.isArray(cart) || cart.length === 0) {
-    return res.status(400).json({ error: 'Invalid cart' });
-  }
-
-  let totalCostCents = 0;
-  const products = await Promise.all(cart.map(async (item) => {
-    const product = await Product.findByPk(item.productId);
-    if (!product) {
-      throw new Error(`Product not found: ${item.productId}`);
-    }
-    const deliveryOption = await DeliveryOption.findByPk(item.deliveryOptionId);
-    if (!deliveryOption) {
-      throw new Error(`Invalid delivery option: ${item.deliveryOptionId}`);
-    }
-    const productCost = product.priceCents * item.quantity;
-    const shippingCost = deliveryOption.priceCents;
-    totalCostCents += productCost + shippingCost;
-    const estimatedDeliveryTimeMs = Date.now() + deliveryOption.deliveryDays * 24 * 60 * 60 * 1000;
-    return {
-      productId: item.productId,
-      quantity: item.quantity,
-      estimatedDeliveryTimeMs
-    };
-  }));
-
-  // Apply 10% tax
-  totalCostCents = Math.round(totalCostCents * 1.1);
-
-  // Create the order
-  const order = await Order.create({
-    orderTimeMs: Date.now(),
-    totalCostCents,
-    products
-  });
-
-  // Remove everything from the cart
-  await CartItem.destroy({ where: {} });
-
-  res.status(201).json(order);
-});
-
-// API route to get a single order by its ID
-app.get('/orders/:orderId', async (req, res) => {
-  const { orderId } = req.params;
-  const expand = req.query.expand;
-
-  let order = await Order.findByPk(orderId);
-  if (!order) {
-    return res.status(404).json({ error: 'Order not found' });
-  }
-
-  if (expand === 'products') {
-    const products = await Promise.all(order.products.map(async (product) => {
-      const productDetails = await Product.findByPk(product.productId);
-      return {
-        ...product,
-        product: productDetails
-      };
-    }));
-    order = {
-      ...order.toJSON(),
-      products
-    };
-  }
-
-  res.json(order);
-});
-
-// API route to reset all data
-app.post('/reset', async (req, res) => {
-  await sequelize.sync({ force: true });
-
-  // Load default data
-  await Product.bulkCreate(defaultProducts);
-  await DeliveryOption.bulkCreate(defaultDeliveryOptions);
-  await CartItem.bulkCreate(defaultCart);
-  await Order.bulkCreate(defaultOrders);
-
-  res.status(204).send();
-});
+// Use routes
+app.use('/products', productRoutes);
+app.use('/delivery-options', deliveryOptionRoutes);
+app.use('/cart-items', cartItemRoutes);
+app.use('/orders', orderRoutes);
+app.use('/reset', resetRoutes);
 
 // Error handling middleware
 /* eslint-disable no-unused-vars */
