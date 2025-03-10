@@ -5,8 +5,8 @@ This is the backend for the [ecommerce-project](https://github.com/SuperSimpleDe
 ## Run this Backend
 To run this backend:
 1. Install the latest version of Node (version 22+)
-2. Download this code and open it in VSCOde.
-3. Open the Command Line by clicking `Terminal` > `New Terminal`.
+2. Download this code and open it in VSCode
+3. Open the Command Line by clicking `Terminal` > `New Terminal`
 4. Run `npm install`, and run `node server.js`
 
 ## Troubleshooting
