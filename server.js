@@ -8,6 +8,7 @@ import deliveryOptionRoutes from './routes/deliveryOptions.js';
 import cartItemRoutes from './routes/cartItems.js';
 import orderRoutes from './routes/orders.js';
 import resetRoutes from './routes/reset.js';
+import paymentSummaryRoutes from './routes/paymentSummary.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.use('/delivery-options', deliveryOptionRoutes);
 app.use('/cart-items', cartItemRoutes);
 app.use('/orders', orderRoutes);
 app.use('/reset', resetRoutes);
+app.use('/payment-summary', paymentSummaryRoutes);
 
 // Error handling middleware
 /* eslint-disable no-unused-vars */
