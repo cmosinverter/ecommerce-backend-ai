@@ -84,7 +84,7 @@ Returns all items in the cart.
 ## POST /api/cart-items
 Adds a product to the cart.
 
-**Request Body:**
+**Request:**
 ```js
 {
   "productId": "uuid",
@@ -108,7 +108,7 @@ Updates a cart item.
 **URL Parameters:**
 - `productId`: ID of the product to update
 
-**Request Body:**
+**Request:**
 ```js
 {
    // Optional, must be ≥ 1
