@@ -19,14 +19,14 @@
 - [GET /api/payment-summary](#get-apipayment-summary)
 - [POST /api/reset](#post-apireset)
   
-### GET /api/products
+## GET /api/products
 Returns a list of products.
 
 **Query Parameters:**
 - `search=...` (optional): Search term to find products by name or keywords
 
 **Response:**
-```json
+```js
 [
   {
     "id": "uuid",
@@ -42,14 +42,14 @@ Returns a list of products.
 ]
 ```
 
-### GET /api/delivery-options
+## GET /api/delivery-options
 Returns a list of all delivery options.
 
 **Query Parameters:**
 - `expand=estimatedDeliveryTime` (optional): includes estimated delivery times
 
 **Response:**
-```json
+```js
 [
   {
     "id": "string",
@@ -61,14 +61,14 @@ Returns a list of all delivery options.
 ]
 ```
 
-### GET /api/cart-items
+## GET /api/cart-items
 Returns all items in the cart.
 
 **Query Parameters:**
 - `expand=product` (optional): include full product details
 
 **Response:**
-```json
+```js
 [
   {
     "productId": "uuid",
@@ -80,11 +80,11 @@ Returns all items in the cart.
 ]
 ```
 
-### POST /api/cart-items
+## POST /api/cart-items
 Adds a product to the cart.
 
 **Request Body:**
-```json
+```js
 {
   "productId": "uuid",
   // Must be between 1 and 10
@@ -93,7 +93,7 @@ Adds a product to the cart.
 ```
 
 **Response:**
-```json
+```js
 {
   "productId": "uuid",
   "quantity": "number",
@@ -101,14 +101,14 @@ Adds a product to the cart.
 }
 ```
 
-### PUT /api/cart-items/:productId
+## PUT /api/cart-items/:productId
 Updates a cart item.
 
 **URL Parameters:**
 - `productId`: ID of the product to update
 
 **Request Body:**
-```json
+```js
 {
    // Optional, must be ≥ 1
   "quantity": "number",
@@ -119,7 +119,7 @@ Updates a cart item.
 ```
 
 **Response:**
-```json
+```js
 {
   "productId": "uuid",
   "quantity": "number",
@@ -127,7 +127,7 @@ Updates a cart item.
 }
 ```
 
-### DELETE /api/cart-items/:productId
+## DELETE /api/cart-items/:productId
 Removes an item from the cart.
 
 **URL Parameters:**
@@ -136,14 +136,14 @@ Removes an item from the cart.
 **Response:**
 - Status: 204 (No response)
 
-### GET /api/orders
+## GET /api/orders
 Returns all orders, sorted by most recent first.
 
 **Query Parameters:**
 - `expand=products` (optional): include full product details
 
 **Response:**
-```json
+```js
 [
   {
     "id": "uuid",
@@ -162,11 +162,11 @@ Returns all orders, sorted by most recent first.
 ]
 ```
 
-### POST /api/orders
+## POST /api/orders
 Creates a new order from the current cart items.
 
 **Response:**
-```json
+```js
 {
   "id": "uuid",
   "orderTimeMs": "number",
@@ -182,7 +182,7 @@ Creates a new order from the current cart items.
 ```
 - Side effect: Cart is emptied
 
-### GET /api/orders/:orderId
+## GET /api/orders/:orderId
 Returns a specific order.
 
 **URL Parameters:**
@@ -192,7 +192,7 @@ Returns a specific order.
 - `expand=products` (optional): include full product details
 
 **Response:**
-```json
+```js
 {
   "id": "uuid",
   "orderTimeMs": "number",
@@ -209,11 +209,11 @@ Returns a specific order.
 }
 ```
 
-### GET /api/payment-summary
+## GET /api/payment-summary
 Calculates and returns the payment summary for the current cart.
 
 **Response:**
-```json
+```js
 {
   "totalItems": "number",
   "productCostCents": "number",
@@ -224,7 +224,7 @@ Calculates and returns the payment summary for the current cart.
 }
 ```
 
-### POST /api/reset
+## POST /api/reset
 Resets the database to its default state.
 
 **Response:**
