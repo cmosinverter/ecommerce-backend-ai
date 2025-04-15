@@ -1,5 +1,5 @@
 ## E-Commerce Backend Documentation
-Here's a list of all the URL Paths you can use with this backend.
+Here's a list of all the URL Paths you can use with this backend and what each URL Path does.
 
 **Products, Delivery Options**
 - [GET /api/products](#get-apiproducts)
