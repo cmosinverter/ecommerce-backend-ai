@@ -20,11 +20,13 @@ if (isUsingRDS) {
     host: process.env.RDS_HOSTNAME,
     port: process.env.RDS_PORT || defaultPort,
     dialect: dbType,
+    logging: false
   });
 } else {
   sequelize = new Sequelize({
     dialect: 'sqlite',
     dialectModule: sqlJsAsSqlite3,
+    logging: false
   });
 
   // Save database to file after write operations.
